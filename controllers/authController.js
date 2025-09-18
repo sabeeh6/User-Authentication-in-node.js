@@ -1,6 +1,5 @@
-
 export const googleSuccess = (req, res) => {
-  res.json({ message: "Login successful 😎", user: req.user });
+  res.status(200).json({ message: "Login successful 😎", user: req.user });
 };
 
 export const googleFailure = (req, res) => {

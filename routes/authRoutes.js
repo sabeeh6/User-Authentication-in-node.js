@@ -13,23 +13,8 @@ router.get("/google/callback",
   (req, res) => res.redirect("/auth/success")
 );
 
-
-// Success
-router.get("/success", (req, res) => {
-  res.json({ message: "Login successful 😎", user: req.user });
-});
-
-// Failure
-router.get("/failure", (req, res) => {
-  res.status(401).json({ message: "Login failed ❌" });
-});
-
-// Logout
-router.get("/logout", (req, res) => {
-  req.logout(err => {
-    if (err) return res.status(500).json({ error: "Logout failed" });
-    res.json({ message: "Logged out ✅" });
-  });
-});
+router.get("/success", googleSuccess);
+router.get("/failure", googleFailure);
+router.get("/logout", logoutUser);
 
 export default router;
