@@ -1,6 +1,5 @@
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
-import jwt from "jsonwebtoken";
 import User from "../model/userModel.js";
 
 export const setupGoogleStrategy = () => {
@@ -14,42 +13,37 @@ export const setupGoogleStrategy = () => {
       async (accessToken, refreshToken, profile, done) => {
         try {
           let user = await User.findOne({ googleId: profile.id });
-
+          console.log("TOKEN" , accessToken);          
           if (!user) {
             user = await User.create({
               googleId: profile.id,
-              displayName: profile.displayName,
+              name: profile.displayName,
               email: profile.emails?.[0]?.value,
               photo: profile.photos?.[0]?.value,
+              tokens: { accessToken, refreshToken }
             });
           }
 
-          // 🔹 JWT Tokens
-          const jwtAccessToken = jwt.sign(
-            { id: user._id },
-            process.env.JWT_SECRET,
-            { expiresIn: "15m" }
-          );
-
-          const jwtRefreshToken = jwt.sign(
-            { id: user._id },
-            process.env.JWT_REFRESH_SECRET,
-            { expiresIn: "7d" }
-          );
-
-          // 🔹 Tokens ko directly callback me bhej dete hain
-          done(null, {
-            ...user.toObject(),
-            tokens: {
-              accessToken: jwtAccessToken,
-              refreshToken: jwtRefreshToken,
-            },
-          });
+          done(null, user); // Sirf user object pass karo
         } catch (err) {
-          console.error("ERROR", err.message);
           done(err, null);
         }
       }
     )
   );
+
+  // Serialize user (session mein store karne ke liye)
+  passport.serializeUser((user, done) => {
+    done(null, user._id);
+  });
+
+  // Deserialize user (session se retrieve karne ke liye)
+  passport.deserializeUser(async (id, done) => {
+    try {
+      const user = await User.findById(id);
+      done(null, user);
+    } catch (err) {
+      done(err, null);
+    }
+  });
 };

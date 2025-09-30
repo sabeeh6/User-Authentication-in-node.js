@@ -16,11 +16,11 @@ router.get("/google", passport.authenticate("google", { scope: ["profile", "emai
 // Step 2: Google callback
 router.get("/google/callback",
   passport.authenticate("google", { failureRedirect: "/auth/failure" }),
-  (req, res) => res.redirect("/auth/success")
+  (req, res) => res.redirect("http://localhost:3000/dashboard")
 );
 
 router.get("/success", googleSuccess);
 router.get("/failure", googleFailure);
-router.get("/logout", logoutUser);
+router.post("/logout", logoutUser);
 
 export default router;
