@@ -1,8 +1,9 @@
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
+import jwt from "jsonwebtoken";
 import User from "../model/userModel.js";
 
-export const setupGoogleStrategy= ()=>{
+export const setupGoogleStrategy = () => {
   passport.use(
     new GoogleStrategy(
       {
@@ -23,29 +24,32 @@ export const setupGoogleStrategy= ()=>{
             });
           }
 
-          done(null, user);
-          console.log("User" , user);
-          
+          // 🔹 JWT Tokens
+          const jwtAccessToken = jwt.sign(
+            { id: user._id },
+            process.env.JWT_SECRET,
+            { expiresIn: "15m" }
+          );
+
+          const jwtRefreshToken = jwt.sign(
+            { id: user._id },
+            process.env.JWT_REFRESH_SECRET,
+            { expiresIn: "7d" }
+          );
+
+          // 🔹 Tokens ko directly callback me bhej dete hain
+          done(null, {
+            ...user.toObject(),
+            tokens: {
+              accessToken: jwtAccessToken,
+              refreshToken: jwtRefreshToken,
+            },
+          });
         } catch (err) {
-            console.error("ERROR",err.message);
-            
+          console.error("ERROR", err.message);
           done(err, null);
         }
       }
     )
   );
-  // ✅ Passport serialize / deserialize
-  passport.serializeUser((user, done) => {
-      done(null, user.id); // sirf MongoDB ka user._id session me save karte hain
-    });
-    
-    passport.deserializeUser(async (id, done) => {
-        try {
-            const user = await User.findById(id);
-            done(null, user); // full user object req.user me milega
-        } catch (err) {
-            done(err, null);
-        }
-    });
-}
-
+};
